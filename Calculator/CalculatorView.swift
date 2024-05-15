@@ -185,6 +185,7 @@ class CalculatorView: UIView {
     private func numberPressed(_ number: String) {
         ensureValidAndUpdateDisplay {
             if state == .initial || state == .afterEqual {
+                operation = ""
                 currentInput = number
                 state = .enteringNumber
             } else {
@@ -299,11 +300,21 @@ class CalculatorView: UIView {
 
     private func toggleSign() {
         ensureValidAndUpdateDisplay {
-            if currentInput.hasPrefix("-") {
-                currentInput.remove(at: currentInput.startIndex)
-            } else {
-                currentInput.insert("-", at: currentInput.startIndex)
+            guard !(state == .operationPressed && currentInput.isEmpty) else {
+                return
             }
+            var sourceOperator = currentInput
+            if state == .afterEqual {
+                operation = ""
+                state = .enteringNumber
+                sourceOperator = resultString
+            }
+            if sourceOperator.hasPrefix("-") {
+                sourceOperator.remove(at: sourceOperator.startIndex)
+            } else {
+                sourceOperator.insert("-", at: sourceOperator.startIndex)
+            }
+            currentInput = sourceOperator
             resultString = currentInput
         }
     }

@@ -85,7 +85,7 @@ class Calculator {
         let result = command.execute()
         currentResult = result
         history.append(command)
-        return result
+        return currentResult
     }
 
     func undoLastOperation() -> Decimal {
