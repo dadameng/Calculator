@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		36C1EBCC2BF452B1003AEA53 /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C1EBCB2BF452B1003AEA53 /* UIColor+Hex.swift */; };
 		B4C591D82BF395C500EE9E47 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C591D72BF395C500EE9E47 /* AppDelegate.swift */; };
 		B4C591DA2BF395C500EE9E47 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C591D92BF395C500EE9E47 /* SceneDelegate.swift */; };
 		B4C591DC2BF395C500EE9E47 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C591DB2BF395C500EE9E47 /* ViewController.swift */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		36C1EBCB2BF452B1003AEA53 /* UIColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
 		B4C591D42BF395C500EE9E47 /* Calculator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Calculator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4C591D72BF395C500EE9E47 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B4C591D92BF395C500EE9E47 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				B4C591DB2BF395C500EE9E47 /* ViewController.swift */,
 				B4C592072BF39A7D00EE9E47 /* CalculatorView.swift */,
 				B4C5920E2BF39F2700EE9E47 /* Calculator.swift */,
+				36C1EBCB2BF452B1003AEA53 /* UIColor+Hex.swift */,
 				B4C591DD2BF395C500EE9E47 /* Main.storyboard */,
 				B4C591E02BF395C800EE9E47 /* Assets.xcassets */,
 				B4C591E22BF395C800EE9E47 /* LaunchScreen.storyboard */,
@@ -278,6 +281,7 @@
 				B4C592082BF39A7D00EE9E47 /* CalculatorView.swift in Sources */,
 				B4C591DC2BF395C500EE9E47 /* ViewController.swift in Sources */,
 				B4C591D82BF395C500EE9E47 /* AppDelegate.swift in Sources */,
+				36C1EBCC2BF452B1003AEA53 /* UIColor+Hex.swift in Sources */,
 				B4C5920F2BF39F2700EE9E47 /* Calculator.swift in Sources */,
 				B4C591DA2BF395C500EE9E47 /* SceneDelegate.swift in Sources */,
 			);
