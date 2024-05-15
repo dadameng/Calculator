@@ -6,14 +6,25 @@ class CalculatorView: UIView {
     private var resultLabel: UILabel!
     private var buttonContainerView: UIView!
     private var buttons: [[UIButton]] = []
-
-    private var currentInput: String = ""
-    private var previousInput: String = ""
-    private var operation: String = ""
-
     private let calculator = Calculator()
     private let padding: CGFloat = 10
     private let buttonCornerRadius = 15.0
+
+    private var currentInput: String = ""
+    private var previousInput: String = ""
+    private var resultString: String = ""
+    private var operation: String = ""
+    private var isNegative = false
+    
+    enum State {
+        case initial
+        case enteringNumber
+        case operationPressed
+        case afterEqual
+        case invalidInput
+    }
+
+    private var state: State = .initial
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -45,6 +56,7 @@ class CalculatorView: UIView {
 
         processLabel.textColor = .white
         resultLabel.textColor = .white
+        processLabel.text = "0"
         resultLabel.text = "0"
 
         addSubview(processLabel)
@@ -154,11 +166,11 @@ class CalculatorView: UIView {
         case "0" ... "9":
             numberPressed(title)
         case ".":
-            decimalInput()
+            decimalPressed()
         case "+", "−", "×", "÷":
             operationPressed(title)
         case "=":
-            equalsPressed()
+            equalPressed()
         case "C":
             clearPressed()
         case "±":
@@ -171,58 +183,98 @@ class CalculatorView: UIView {
     }
 
     private func numberPressed(_ number: String) {
-        if currentInput == "0" && number != "." {
-            currentInput = ""
+        ensureValidAndUpdateDisplay {
+            if state == .initial || state == .afterEqual {
+                currentInput = number
+                state = .enteringNumber
+            } else {
+                currentInput += number
+            }
+            resultString = currentInput
         }
-        currentInput += number
-        resultLabel.text = currentInput
-        updateProcessLabel()
     }
 
-    private func decimalInput() {
-        if currentInput.isEmpty || currentInput == "0" {
-            currentInput = "0."
-        } else if !currentInput.contains(".") {
-            currentInput += "."
+    private func decimalPressed() {
+        ensureValidAndUpdateDisplay {
+            if state == .initial {
+                currentInput = "0."
+                state = .enteringNumber
+            } else if state == .afterEqual {
+                operation = ""
+                currentInput = resultString
+                state = .enteringNumber
+            }
+            
+            if !currentInput.contains(".") {
+                currentInput += "."
+            }
+            resultString = currentInput
         }
-        resultLabel.text = currentInput
-        updateProcessLabel()
     }
-    
+
     private func operationPressed(_ op: String) {
-        operation = op
-        previousInput = currentInput
-        currentInput = ""
-        updateProcessLabel()
+        ensureValidAndUpdateDisplay {
+            if state == .enteringNumber {
+                operation = op
+                previousInput = currentInput
+                resultString = currentInput
+                currentInput = ""
+                state = .operationPressed
+            }  else if state == .afterEqual {
+                operation = op
+                previousInput = resultString
+                currentInput = ""
+                state = .operationPressed
+            } else if state == .operationPressed {
+                operation = op
+            }
+        }
     }
 
     private func applyPercentage() {
-        if currentInput.isEmpty || currentInput == "0" {
-            currentInput = "0.00"
-        } else {
-            guard let value = Decimal(string: currentInput) else {
-                showError("Invalid input")
-                return
+        ensureValidAndUpdateDisplay {
+            if state == .initial {
+                currentInput = "0"
+            } else {
+                var sourceOperator = currentInput
+                if state == .afterEqual {
+                    sourceOperator = resultString
+                }
+                guard let value = Decimal(string: sourceOperator) else {
+                    showError("Invalid input")
+                    return
+                }
+                currentInput = "\(value / 100)"
+                if state == .afterEqual {
+                    previousInput = currentInput
+                    state = .enteringNumber
+                }
             }
-            currentInput = "\(value / 100)"
-        }
-        resultLabel.text = currentInput
-        updateProcessLabel()
-    }
-
-    private func updateProcessLabel() {
-        if operation.isEmpty {
-            processLabel.text = currentInput
-        } else {
-            processLabel.text = "\(previousInput) \(operation) \(currentInput)"
+            operation = ""
+            resultString = currentInput
         }
     }
 
-    private func equalsPressed() {
+    private func equalPressed() {
+        ensureValidAndUpdateDisplay {
+            if state == .afterEqual {
+                previousInput = resultString
+                executeOperation()
+            } else if state == .operationPressed {
+                if currentInput.isEmpty {
+                    currentInput = previousInput
+                }
+                executeOperation()
+            }
+        }
+    }
+
+    private func executeOperation() {
         guard let prev = Decimal(string: previousInput), let curr = Decimal(string: currentInput) else {
             showError("Invalid input")
             return
         }
+        state = .afterEqual
         let command: Command
         switch operation {
         case "+":
@@ -242,33 +294,52 @@ class CalculatorView: UIView {
             return
         }
         let result = calculator.performOperation(command)
-        resultLabel.text = "\(result)"
-        processLabel.text = "\(previousInput) \(operation) \(currentInput)"
-        currentInput = "\(result)"
-    }
-
-    private func clearPressed() {
-        calculator.clearHistory()
-        resultLabel.text = "0"
-        processLabel.text = ""
-        currentInput = ""
-        previousInput = ""
-        operation = ""
+        resultString = "\(result)"
     }
 
     private func toggleSign() {
-        if currentInput.hasPrefix("-") {
-            currentInput.remove(at: currentInput.startIndex)
-        } else {
-            currentInput.insert("-", at: currentInput.startIndex)
+        ensureValidAndUpdateDisplay {
+            if currentInput.hasPrefix("-") {
+                currentInput.remove(at: currentInput.startIndex)
+            } else {
+                currentInput.insert("-", at: currentInput.startIndex)
+            }
+            resultString = currentInput
         }
-        resultLabel.text = currentInput
+    }
+    
+    private func clearPressed() {
+        currentInput = "0"
+        resultString = "0"
+        previousInput = ""
+        operation = ""
+        state = .initial
+        updateDisplay()
+    }
+
+    private func updateDisplay() {
+        if operation.isEmpty {
+            processLabel.text = currentInput
+        } else {
+            processLabel.text = "\(previousInput) \(operation) \(currentInput)"
+        }
+        resultLabel.text = resultString
     }
 
     private func showError(_ message: String) {
+        resultString = message
         resultLabel.text = message
         currentInput = ""
         previousInput = ""
         operation = ""
+        state = .invalidInput
+    }
+    
+    private func ensureValidAndUpdateDisplay(_ block: () -> Void) {
+        guard state != .invalidInput else {
+            return
+        }
+        block()
+        updateDisplay()
     }
 }
