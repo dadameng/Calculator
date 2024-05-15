@@ -14,7 +14,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         view.backgroundColor = .black
-        let calculatorView = CalculatorView()
+        let calculatorView = CalculatorView(frame: CGRectZero, initialValue: "0")
         view.addSubview(calculatorView)
         
         calculatorView.snp.makeConstraints { make in

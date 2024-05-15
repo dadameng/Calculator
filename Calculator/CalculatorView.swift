@@ -1,45 +1,47 @@
 import SnapKit
 import UIKit
+import Factory
+import Combine
 
-class CalculatorView: UIView {
+final class CalculatorView: UIView {
     private var processLabel: UILabel!
     private var resultLabel: UILabel!
     private var buttonContainerView: UIView!
     private var buttons: [[UIButton]] = []
-    private let calculator = Calculator()
     private let padding: CGFloat = 10
     private let buttonCornerRadius = 15.0
-
-    private var currentInput: String = ""
-    private var previousInput: String = ""
-    private var resultString: String = ""
-    private var operation: String = ""
-    private var isNegative = false
     
-    enum State {
-        case initial
-        case enteringNumber
-        case operationPressed
-        case afterEqual
-        case invalidInput
-    }
+    private var calculator: Calculator
+    private var cancellables = Set<AnyCancellable>()
 
-    private var state: State = .initial
-
-    override init(frame: CGRect) {
+    // 使用依赖注入的初始化方法
+    init(frame: CGRect, initialValue: String) {
+        self.calculator = Container.shared.calculator(initialValue)
         super.init(frame: frame)
         setupUI()
     }
 
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupUI()
+        fatalError("init(coder:) has not been implemented")
     }
 
     private func setupUI() {
         backgroundColor = .black
         setupLabels()
         setupButtons()
+        calculator.resultStringPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] result in
+                self?.resultLabel.text = result
+            }
+            .store(in: &cancellables)
+
+        calculator.processStringPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] process in
+                self?.processLabel.text = process
+            }
+            .store(in: &cancellables)
     }
 
     private func setupLabels() {
@@ -164,193 +166,21 @@ class CalculatorView: UIView {
 
         switch title {
         case "0" ... "9":
-            numberPressed(title)
+            calculator.numberPressed(title)
         case ".":
-            decimalPressed()
+            calculator.decimalPressed()
         case "+", "−", "×", "÷":
-            operationPressed(title)
+            calculator.operationPressed(title)
         case "=":
-            equalPressed()
+            calculator.equalPressed()
         case "C":
-            clearPressed()
+            calculator.clearPressed()
         case "±":
-            toggleSign()
+            calculator.toggleSign()
         case "%":
-            applyPercentage()
+            calculator.applyPercentage()
         default:
             break
         }
-    }
-
-    private func numberPressed(_ number: String) {
-        ensureValidAndUpdateDisplay {
-            if state == .initial || state == .afterEqual {
-                operation = ""
-                currentInput = number
-                state = .enteringNumber
-            } else {
-                currentInput += number
-            }
-            resultString = currentInput
-        }
-    }
-
-    private func decimalPressed() {
-        ensureValidAndUpdateDisplay {
-            if state == .initial {
-                currentInput = "0."
-                state = .enteringNumber
-            } else if state == .afterEqual {
-                operation = ""
-                currentInput = resultString
-                state = .enteringNumber
-            }
-            
-            if !currentInput.contains(".") {
-                currentInput += "."
-            }
-            resultString = currentInput
-        }
-    }
-
-    private func operationPressed(_ op: String) {
-        ensureValidAndUpdateDisplay {
-            if state == .enteringNumber {
-                operation = op
-                previousInput = currentInput
-                resultString = currentInput
-                currentInput = ""
-                state = .operationPressed
-            }  else if state == .afterEqual {
-                operation = op
-                previousInput = resultString
-                currentInput = ""
-                state = .operationPressed
-            } else if state == .operationPressed {
-                operation = op
-            }
-        }
-    }
-
-    private func applyPercentage() {
-        ensureValidAndUpdateDisplay {
-            if state == .initial {
-                currentInput = "0"
-            } else {
-                var sourceOperator = currentInput
-                if state == .afterEqual {
-                    sourceOperator = resultString
-                }
-                guard let value = Decimal(string: sourceOperator) else {
-                    showError("Invalid input")
-                    return
-                }
-                currentInput = "\(value / 100)"
-                if state == .afterEqual {
-                    previousInput = currentInput
-                    state = .enteringNumber
-                }
-            }
-            operation = ""
-            resultString = currentInput
-        }
-    }
-
-    private func equalPressed() {
-        ensureValidAndUpdateDisplay {
-            if state == .afterEqual {
-                previousInput = resultString
-                executeOperation()
-            } else if state == .operationPressed {
-                if currentInput.isEmpty {
-                    currentInput = previousInput
-                }
-                executeOperation()
-            }
-        }
-    }
-
-    private func executeOperation() {
-        guard let prev = Decimal(string: previousInput), let curr = Decimal(string: currentInput) else {
-            showError("Invalid input")
-            return
-        }
-        state = .afterEqual
-        let command: Command
-        switch operation {
-        case "+":
-            command = AddCommand(operand1: prev, operand2: curr)
-        case "−":
-            command = SubtractCommand(operand1: prev, operand2: curr)
-        case "×":
-            command = MultiplyCommand(operand1: prev, operand2: curr)
-        case "÷":
-            guard curr != 0 else {
-                showError("Cannot divide by zero")
-                return
-            }
-            command = DivideCommand(operand1: prev, operand2: curr)
-        default:
-            showError("Unknown operation")
-            return
-        }
-        let result = calculator.performOperation(command)
-        resultString = "\(result)"
-    }
-
-    private func toggleSign() {
-        ensureValidAndUpdateDisplay {
-            guard !(state == .operationPressed && currentInput.isEmpty) else {
-                return
-            }
-            var sourceOperator = currentInput
-            if state == .afterEqual {
-                operation = ""
-                state = .enteringNumber
-                sourceOperator = resultString
-            }
-            if sourceOperator.hasPrefix("-") {
-                sourceOperator.remove(at: sourceOperator.startIndex)
-            } else {
-                sourceOperator.insert("-", at: sourceOperator.startIndex)
-            }
-            currentInput = sourceOperator
-            resultString = currentInput
-        }
-    }
-    
-    private func clearPressed() {
-        currentInput = "0"
-        resultString = "0"
-        previousInput = ""
-        operation = ""
-        state = .initial
-        updateDisplay()
-    }
-
-    private func updateDisplay() {
-        if operation.isEmpty {
-            processLabel.text = currentInput
-        } else {
-            processLabel.text = "\(previousInput) \(operation) \(currentInput)"
-        }
-        resultLabel.text = resultString
-    }
-
-    private func showError(_ message: String) {
-        resultString = message
-        resultLabel.text = message
-        currentInput = ""
-        previousInput = ""
-        operation = ""
-        state = .invalidInput
-    }
-    
-    private func ensureValidAndUpdateDisplay(_ block: () -> Void) {
-        guard state != .invalidInput else {
-            return
-        }
-        block()
-        updateDisplay()
     }
 }
