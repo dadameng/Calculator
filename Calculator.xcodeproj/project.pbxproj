@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		36B6D76C2BF5ACA500AF8A67 /* UIImage+Shape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B6D76B2BF5ACA500AF8A67 /* UIImage+Shape.swift */; };
 		36C1EBCC2BF452B1003AEA53 /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C1EBCB2BF452B1003AEA53 /* UIColor+Hex.swift */; };
 		B4A0CEEF2BF4E99500630787 /* Factory in Frameworks */ = {isa = PBXBuildFile; productRef = B4A0CEEE2BF4E99500630787 /* Factory */; };
 		B4A0CEF12BF4EA9200630787 /* DependencyInject.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A0CEF02BF4EA9200630787 /* DependencyInject.swift */; };
@@ -34,6 +35,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		36B6D76B2BF5ACA500AF8A67 /* UIImage+Shape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Shape.swift"; sourceTree = "<group>"; };
 		36C1EBCB2BF452B1003AEA53 /* UIColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
 		B4A0CEF02BF4EA9200630787 /* DependencyInject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyInject.swift; sourceTree = "<group>"; };
 		B4C591D42BF395C500EE9E47 /* Calculator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Calculator.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -71,6 +73,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		36B6D76A2BF5AC7900AF8A67 /* extension */ = {
+			isa = PBXGroup;
+			children = (
+				36C1EBCB2BF452B1003AEA53 /* UIColor+Hex.swift */,
+				36B6D76B2BF5ACA500AF8A67 /* UIImage+Shape.swift */,
+			);
+			path = extension;
+			sourceTree = "<group>";
+		};
 		B4C591CB2BF395C500EE9E47 = {
 			isa = PBXGroup;
 			children = (
@@ -92,13 +103,13 @@
 		B4C591D62BF395C500EE9E47 /* Calculator */ = {
 			isa = PBXGroup;
 			children = (
+				36B6D76A2BF5AC7900AF8A67 /* extension */,
 				B4C591D72BF395C500EE9E47 /* AppDelegate.swift */,
 				B4C591D92BF395C500EE9E47 /* SceneDelegate.swift */,
 				B4C591DB2BF395C500EE9E47 /* ViewController.swift */,
 				B4C5920E2BF39F2700EE9E47 /* Calculator.swift */,
 				B4C592072BF39A7D00EE9E47 /* CalculatorView.swift */,
 				B4A0CEF02BF4EA9200630787 /* DependencyInject.swift */,
-				36C1EBCB2BF452B1003AEA53 /* UIColor+Hex.swift */,
 				B4C591DD2BF395C500EE9E47 /* Main.storyboard */,
 				B4C591E02BF395C800EE9E47 /* Assets.xcassets */,
 				B4C591E22BF395C800EE9E47 /* LaunchScreen.storyboard */,
@@ -228,6 +239,7 @@
 				B4C592082BF39A7D00EE9E47 /* CalculatorView.swift in Sources */,
 				B4A0CEF12BF4EA9200630787 /* DependencyInject.swift in Sources */,
 				B4C591DC2BF395C500EE9E47 /* ViewController.swift in Sources */,
+				36B6D76C2BF5ACA500AF8A67 /* UIImage+Shape.swift in Sources */,
 				B4C591D82BF395C500EE9E47 /* AppDelegate.swift in Sources */,
 				36C1EBCC2BF452B1003AEA53 /* UIColor+Hex.swift in Sources */,
 				B4C5920F2BF39F2700EE9E47 /* Calculator.swift in Sources */,

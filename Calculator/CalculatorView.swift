@@ -1,7 +1,7 @@
+import Combine
+import Factory
 import SnapKit
 import UIKit
-import Factory
-import Combine
 
 final class CalculatorView: UIView {
     private var processLabel: UILabel!
@@ -10,19 +10,35 @@ final class CalculatorView: UIView {
     private var buttons: [[UIButton]] = []
     private let padding: CGFloat = 10
     private let buttonCornerRadius = 15.0
-    
+
     private var calculator: Calculator
     private var cancellables = Set<AnyCancellable>()
+    private let buttonPressedSubject = PassthroughSubject<Void, Never>()
 
-    // 使用依赖注入的初始化方法
+    var buttonPressedPublisher: AnyPublisher<Void, Never> {
+        buttonPressedSubject.eraseToAnyPublisher()
+    }
+
     init(frame: CGRect, initialValue: String) {
-        self.calculator = Container.shared.calculator(initialValue)
+        calculator = Container.shared.calculator(initialValue)
         super.init(frame: frame)
         setupUI()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    public func resetInitialValue(_ initialValue: String) {
+        calculator.resetInitialValue(initialValue)
+    }
+
+    public func extractResult() -> String {
+        return resultLabel.text ?? "0"
+    }
+
+    public func deletePressed() {
+        calculator.deletePressed()
     }
 
     private func setupUI() {
@@ -55,7 +71,8 @@ final class CalculatorView: UIView {
 
         processLabel.font = UIFont.systemFont(ofSize: 24)
         resultLabel.font = UIFont.systemFont(ofSize: 48)
-
+        processLabel.adjustsFontSizeToFitWidth = true
+        resultLabel.adjustsFontSizeToFitWidth = true
         processLabel.textColor = .white
         resultLabel.textColor = .white
         processLabel.text = "0"
@@ -75,7 +92,7 @@ final class CalculatorView: UIView {
             make.height.equalTo(resultLabel.snp.height).multipliedBy(0.5)
         }
         resultLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
-        resultLabel.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        resultLabel.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
     }
 
     private func setupButtons() {
@@ -93,7 +110,7 @@ final class CalculatorView: UIView {
             make.left.right.bottom.equalTo(self)
         }
         buttonContainerView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        buttonContainerView.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        buttonContainerView.setContentHuggingPriority(.defaultLow, for: .vertical)
 
         for row in buttonTitles {
             var buttonRow: [UIButton] = []
@@ -162,6 +179,7 @@ final class CalculatorView: UIView {
     }
 
     @objc private func buttonPressed(_ sender: UIButton) {
+        buttonPressedSubject.send()
         guard let title = sender.currentTitle else { return }
 
         switch title {

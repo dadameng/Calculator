@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 protocol Calculator {
     var resultStringPublisher: AnyPublisher<String, Never> { get }
@@ -11,6 +11,8 @@ protocol Calculator {
     func clearPressed()
     func toggleSign()
     func applyPercentage()
+    func resetInitialValue(_ initialValue: String)
+    func deletePressed()
 }
 
 final class CalculatorImp {
@@ -20,17 +22,18 @@ final class CalculatorImp {
     var resultStringPublisher: AnyPublisher<String, Never> {
         return resultStringSubject.eraseToAnyPublisher()
     }
+
     var processStringPublisher: AnyPublisher<String, Never> {
         return processStringSubject.eraseToAnyPublisher()
     }
-    
+
     private var currentInput: String = ""
     private var previousInput: String = ""
     private var operation: String = ""
-    
+
     private var processString: String = ""
     private var resultString: String = ""
-    
+
     enum State {
         case initial
         case enteringNumber
@@ -40,16 +43,20 @@ final class CalculatorImp {
     }
 
     private var state: State = .initial
-    
+
     init(initialValue: String = "0") {
-        self.currentInput = initialValue
-        self.state = initialValue == "0" ? .initial : .enteringNumber
+        currentInput = initialValue
+        state = initialValue == "0" ? .initial : .enteringNumber
         resultStringSubject.send(initialValue)
         processStringSubject.send(initialValue)
     }
 }
 
 extension CalculatorImp: Calculator {
+    func resetInitialValue(_ initialValue: String) {
+        resetStatus(initialValue)
+    }
+
     func numberPressed(_ number: String) {
         ensureValidAndUpdateDisplay {
             if state == .initial || state == .afterEqual {
@@ -73,7 +80,7 @@ extension CalculatorImp: Calculator {
                 currentInput = resultString
                 state = .enteringNumber
             }
-            
+
             if !currentInput.contains(".") {
                 currentInput += "."
             }
@@ -89,7 +96,7 @@ extension CalculatorImp: Calculator {
                 resultString = currentInput
                 currentInput = ""
                 state = .operationPressed
-            }  else if state == .afterEqual {
+            } else if state == .afterEqual {
                 operation = op
                 previousInput = resultString
                 currentInput = ""
@@ -139,7 +146,7 @@ extension CalculatorImp: Calculator {
             }
         }
     }
-    
+
     func toggleSign() {
         ensureValidAndUpdateDisplay {
             guard !(state == .operationPressed && currentInput.isEmpty) else {
@@ -160,23 +167,75 @@ extension CalculatorImp: Calculator {
             resultString = currentInput
         }
     }
-    
+
     func clearPressed() {
-        currentInput = "0"
-        resultString = "0"
+        resetStatus("0")
+    }
+    
+    func deletePressed() {
+        ensureValidAndUpdateDisplay {
+            if state == .enteringNumber {
+                if !currentInput.isEmpty {
+                    currentInput.removeLast()
+                } else {
+                    state = .initial
+                }
+                if currentInput.isEmpty {
+                    currentInput = "0"
+                    state = .initial
+                }
+            } else if state == .afterEqual {
+                currentInput = resultString
+                if !currentInput.isEmpty {
+                    currentInput.removeLast()
+                } else {
+                    state = .initial
+                }
+                operation = ""
+                if currentInput.isEmpty {
+                    currentInput = "0"
+                    state = .initial
+                } else {
+                    state = .enteringNumber
+                }
+            } else if state == .operationPressed {
+                if currentInput.isEmpty {
+                    operation = ""
+                    currentInput = previousInput
+                    previousInput = ""
+                    state = .enteringNumber
+                } else {
+                    currentInput.removeLast()
+                }
+            }
+            resultString = currentInput
+        }
+    }
+
+    private func resetStatus(_ initialValue: String) {
+        let unformatString = removeCommas(from: initialValue)
+        currentInput = unformatString
+        resultString = unformatString
         previousInput = ""
         operation = ""
-        state = .initial
+        state = unformatString == "0" ? .initial : .enteringNumber
         updateDisplay()
+    }
+    
+    private func removeCommas(from value: String) -> String {
+        return value.replacingOccurrences(of: ",", with: "")
     }
 
     private func executeOperation() {
-        guard let prev = Decimal(string: previousInput), let curr = Decimal(string: currentInput) else {
+        let cleanedPreviousInput = removeCommas(from: previousInput)
+        let cleanedCurrentInput = removeCommas(from: currentInput)
+
+        guard let prev = Decimal(string: cleanedPreviousInput), let curr = Decimal(string: cleanedCurrentInput) else {
             showError("Invalid input")
             return
         }
         state = .afterEqual
-        var result : Decimal
+        var result: Decimal
         switch operation {
         case "+":
             result = prev + curr
@@ -203,12 +262,16 @@ extension CalculatorImp: Calculator {
         } else {
             processString = "\(previousInput) \(operation) \(currentInput)"
         }
-        
         resultStringSubject.send(formatDisplayString(resultString))
         processStringSubject.send(processString)
     }
-    
+
     private func formatDisplayString(_ value: String) -> String {
+        // Check if the value already contains a comma, indicating it has been formatted
+        if value.contains(",") {
+            return value
+        }
+
         guard let decimalValue = Decimal(string: value) else {
             return value
         }
@@ -227,7 +290,7 @@ extension CalculatorImp: Calculator {
         operation = ""
         state = .invalidInput
     }
-    
+
     private func ensureValidAndUpdateDisplay(_ block: () -> Void) {
         guard state != .invalidInput else {
             return
