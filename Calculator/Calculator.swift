@@ -271,7 +271,9 @@ extension CalculatorImp: Calculator {
         if value.contains(",") {
             return value
         }
-
+        if value.hasSuffix(".") {
+             return value
+         }
         guard let decimalValue = Decimal(string: value) else {
             return value
         }
